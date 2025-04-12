@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cliente gRPC</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { border: 1px solid #ccc; margin: 20px 0; padding: 20px; border-radius: 5px; }
+        h2 { margin-top: 0; }
+        label { display: block; margin: 10px 0; }
+        input, button { padding: 8px; margin: 5px 0; }
+        button { cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #45a049; }
+        pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cliente gRPC para Estudiantes</h1>
+        
+        <div class="card">
+            <h2>Listar Estudiantes</h2>
+            <button id="btnListar">Listar Todos</button>
+            <pre id="resultadoListar">Los resultados aparecerán aquí</pre>
+        </div>
+        
+        <div class="card">
+            <h2>Consultar Estudiante</h2>
+            <label>
+                Matrícula:
+                <input type="number" id="matriculaConsultar" placeholder="Ingrese la matrícula">
+            </label>
+            <button id="btnConsultar">Consultar</button>
+            <pre id="resultadoConsultar">Los resultados aparecerán aquí</pre>
+        </div>
+        
+        <div class="card">
+            <h2>Crear Estudiante</h2>
+            <label>
+                Matrícula:
+                <input type="number" id="matriculaCrear" placeholder="Ingrese la matrícula">
+            </label>
+            <label>
+                Nombre:
+                <input type="text" id="nombreCrear" placeholder="Ingrese el nombre">
+            </label>
+            <button id="btnCrear">Crear</button>
+            <pre id="resultadoCrear">Los resultados aparecerán aquí</pre>
+        </div>
+        
+        <div class="card">
+            <h2>Eliminar Estudiante</h2>
+            <label>
+                Matrícula:
+                <input type="number" id="matriculaEliminar" placeholder="Ingrese la matrícula">
+            </label>
+            <button id="btnEliminar">Eliminar</button>
+            <pre id="resultadoEliminar">Los resultados aparecerán aquí</pre>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('btnListar').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/grpc/estudiante');
+                
+                // Show loading indicator
+                document.getElementById('resultadoListar').textContent = "Cargando estudiantes...";
+                
+                if (response.ok) {
+                    // Try to get the full text response
+                    const text = await response.text();
+                    
+                    if (text.startsWith("Listando estudiantes a través de gRPC:") && text.trim() === "Listando estudiantes a través de gRPC:") {
+                        // If the server only returns the header, make another request to get students via the regular API
+                        try {
+                            const fallbackResponse = await fetch('/api/estudiante');
+                            if (fallbackResponse.ok) {
+                                const estudiantes = await fallbackResponse.json();
+                                document.getElementById('resultadoListar').textContent = 
+                                    "Listando estudiantes a través de gRPC:\n" + 
+                                    JSON.stringify(estudiantes, null, 2);
+                            } else {
+                                document.getElementById('resultadoListar').textContent = text + "\nNo se pudieron obtener los estudiantes.";
+                            }
+                        } catch (error) {
+                            document.getElementById('resultadoListar').textContent = text;
+                        }
+                    } else {
+                        // Full response received, just display it
+                        document.getElementById('resultadoListar').textContent = text;
+                    }
+                } else {
+                    document.getElementById('resultadoListar').textContent = await response.text();
+                }
+            } catch (error) {
+                document.getElementById('resultadoListar').textContent = `Error: ${error.message}`;
+            }
+        });
+        
+        document.getElementById('btnConsultar').addEventListener('click', async () => {
+            const matricula = document.getElementById('matriculaConsultar').value;
+            if (!matricula) {
+                alert('Por favor ingrese una matrícula');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/grpc/estudiante/${matricula}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('resultadoConsultar').textContent = JSON.stringify(data, null, 2);
+                } else {
+                    document.getElementById('resultadoConsultar').textContent = await response.text();
+                }
+            } catch (error) {
+                document.getElementById('resultadoConsultar').textContent = `Error: ${error.message}`;
+            }
+        });
+        
+        document.getElementById('btnCrear').addEventListener('click', async () => {
+            const matricula = document.getElementById('matriculaCrear').value;
+            const nombre = document.getElementById('nombreCrear').value;
+            
+            if (!matricula || !nombre) {
+                alert('Por favor complete todos los campos');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('matricula', matricula);
+                formData.append('nombre', nombre);
+                
+                const response = await fetch('/api/grpc/estudiante', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('resultadoCrear').textContent = JSON.stringify(data, null, 2);
+                } else {
+                    document.getElementById('resultadoCrear').textContent = await response.text();
+                }
+            } catch (error) {
+                document.getElementById('resultadoCrear').textContent = `Error: ${error.message}`;
+            }
+        });
+        
+        document.getElementById('btnEliminar').addEventListener('click', async () => {
+            const matricula = document.getElementById('matriculaEliminar').value;
+            if (!matricula) {
+                alert('Por favor ingrese una matrícula');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/grpc/estudiante/${matricula}`, {
+                    method: 'DELETE'
+                });
+                
+                document.getElementById('resultadoEliminar').textContent = await response.text();
+            } catch (error) {
+                document.getElementById('resultadoEliminar').textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

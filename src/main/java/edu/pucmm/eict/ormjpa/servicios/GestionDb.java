@@ -22,7 +22,7 @@ public class GestionDb<T> {
 
     public GestionDb(Class<T> claseEntidad) {
         if(emf == null) {
-            if(Main.getModoConexion().equalsIgnoreCase("Heroku")){
+            if("Heroku".equalsIgnoreCase(System.getenv("MODO_CONEXION"))) {
                 emf = getConfiguracionBaseDatosHeroku();
             }else{
                 emf = Persistence.createEntityManagerFactory("MiUnidadPersistencia");

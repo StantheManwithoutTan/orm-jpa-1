@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import edu.pucmm.eict.ormjpa.controladores.EstudianteControlador;
 import edu.pucmm.eict.ormjpa.controladores.FotoControlador;
 import edu.pucmm.eict.ormjpa.controladores.ProfesorControlador;
+import edu.pucmm.eict.ormjpa.controladores.EstudianteGRPCControlador;
 import edu.pucmm.eict.ormjpa.entidades.Estudiante;
 import edu.pucmm.eict.ormjpa.entidades.Profesor;
 import edu.pucmm.eict.ormjpa.servicios.BootStrapServices;
@@ -22,10 +23,12 @@ import io.javalin.validation.Rule;
 
 import static io.javalin.apibuilder.ApiBuilder.*;
 
+import java.io.IOException;
+
 public class Main {
 
     //indica el modo de operacion para la base de datos.
-    private static String modoConexion = "";
+    private static String modoConexion = "H2"; // O el valor que necesites, puede ser "Heroku"
 
     enum Rules implements RouteRole {
         ANONYMOUS,
@@ -40,6 +43,9 @@ public class Main {
             System.out.println("Modo de Operacion: "+modoConexion);
         }
 
+        // Iniciar explícitamente el servidor H2 antes de cualquier operación de base de datos
+        BootStrapServices.getInstancia().startDb();
+        
         //Iniciando la base de datos.
         if(modoConexion.isEmpty()) {
             BootStrapServices.getInstancia().init();
@@ -96,6 +102,17 @@ public class Main {
                         path("/{id}", () -> {
                             get(ProfesorControlador::profesorPorId);
                             delete(ProfesorControlador::eliminarProfesor);
+                        });
+                    });
+
+                    path("/grpc", () -> {
+                        path("/estudiante", () -> {
+                            get(EstudianteGRPCControlador::listarEstudiantes);
+                            post(EstudianteGRPCControlador::crearEstudiante);
+                            path("/{matricula}", () -> {
+                                get(EstudianteGRPCControlador::buscarEstudiante);
+                                delete(EstudianteGRPCControlador::eliminarEstudiante);
+                            });
                         });
                     });
                 });
@@ -176,6 +193,15 @@ public class Main {
 
         }).start(getHerokuAssignedPort());
 
+        // Añade esto en el método main, después de iniciar el servidor Javalin
+        try {
+            edu.pucmm.eict.ormjpa.servidores.GRPCServidor grpcServer = new edu.pucmm.eict.ormjpa.servidores.GRPCServidor();
+            grpcServer.start();
+            System.out.println("Servidor gRPC iniciado correctamente");
+        } catch (IOException e) {
+            System.err.println("Error al iniciar servidor gRPC: " + e.getMessage());
+        }
+
         //Endpoint de inicio.
         app.get("/", ctx -> {
             ctx.result(mensaje);
@@ -188,30 +214,19 @@ public class Main {
 
         app.exception(Exception.class, (exception, ctx) -> {
             ctx.status(500);
-            ctx.html("<h1>Error no recuperado:"+exception.getMessage()+"</h1>");
-            exception.printStackTrace();
+            ctx.result("Error interno del servidor: " + exception.getMessage());
         });
-
-
     }
 
-    /**
-     * Metodo para indicar el puerto en Heroku
-     * @return
-     */
-    static int getHerokuAssignedPort() {
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        if (processBuilder.environment().get("PORT") != null) {
-            return Integer.parseInt(processBuilder.environment().get("PORT"));
+    private static int getHerokuAssignedPort() {
+        String herokuPort = System.getenv("PORT");
+        if (herokuPort != null) {
+            return Integer.parseInt(herokuPort);
         }
-        return 7000; //Retorna el puerto por defecto en caso de no estar en Heroku.
+        return 7000; // Puerto por defecto si no se asigna uno desde Heroku
     }
 
-    /**
-     * Nos
-     * @return
-     */
-    public static String getModoConexion(){
+    public static String getModoConexion() {
         return modoConexion;
     }
 }

@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "edu.pucmm.eict.ormjpa.grpc";
+option java_outer_classname = "EstudianteProto";
+
+package estudiante;
+
+// Definición de mensajes para Estudiante
+message EstudianteMessage {
+  int32 matricula = 1;
+  string nombre = 2;
+}
+
+message ListarEstudiantesRequest {}
+
+message ListarEstudiantesResponse {
+  repeated EstudianteMessage estudiantes = 1;
+}
+
+message ConsultarEstudianteRequest {
+  int32 matricula = 1;
+}
+
+message ConsultarEstudianteResponse {
+  EstudianteMessage estudiante = 1;
+}
+
+message CrearEstudianteRequest {
+  EstudianteMessage estudiante = 1;
+}
+
+message CrearEstudianteResponse {
+  EstudianteMessage estudiante = 1;
+  bool exito = 2;
+}
+
+message BorrarEstudianteRequest {
+  int32 matricula = 1;
+}
+
+message BorrarEstudianteResponse {
+  bool exito = 1;
+}
+
+// Definición del servicio
+service EstudianteService {
+  rpc ListarEstudiantes (ListarEstudiantesRequest) returns (ListarEstudiantesResponse);
+  rpc ConsultarEstudiante (ConsultarEstudianteRequest) returns (ConsultarEstudianteResponse);
+  rpc CrearEstudiante (CrearEstudianteRequest) returns (CrearEstudianteResponse);
+  rpc BorrarEstudiante (BorrarEstudianteRequest) returns (BorrarEstudianteResponse);
+}

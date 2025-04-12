@@ -1,16 +1,7 @@
-# Proyecto ORM con JPA
+# # Practica 7 - gRPC Client
 
-Proyecto para demostrar la funcionalidad de ORM con JPA,
-preparado para ser utilizado con Heroku con Postgres.
+## COMO CORRER EL CLIENTE:
 
-## Utiliza:
-
-* Javalin 6.1.3
-* Hibernate 6
-* JPA 3.X
-* OpenApi para Javalin (https://github.com/javalin/javalin-openapi)
-
-## Requiere:
-
-* Java 21
-* Gradle 8.5
+* Usa el comando "./gradlew run" para iniciar el servidor en localhost:7000
+* Para usar el cliente en html, cambia la pagina a localhost:7000/grpc-client.html para interactuar con el cliente.
+* NOTA: para listar Estudiantes por la cantidad que hay, se puede ver en el terminal por la cantidad que hay

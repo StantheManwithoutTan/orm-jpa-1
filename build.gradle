@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.google.protobuf' version '0.9.4'
 }
 
 group 'edu.pucmm.eict'
@@ -56,6 +57,12 @@ dependencies {
     implementation("io.javalin.community.openapi:javalin-swagger-plugin:$openapi") // for Swagger UI
     implementation("io.javalin.community.openapi:javalin-redoc-plugin:$openapi") // for ReDoc UI
 
+    // Dependencias gRPC
+    implementation 'io.grpc:grpc-netty-shaded:1.59.0'
+    implementation 'io.grpc:grpc-protobuf:1.59.0'
+    implementation 'io.grpc:grpc-stub:1.59.0'
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+
 }
 
 shadowJar{
@@ -71,4 +78,21 @@ shadowJar{
  */
 task stage {
     dependsOn shadowJar
+}
+
+// Configuración del plugin de protobuf
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.1"
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.59.0'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
 }
